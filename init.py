@@ -1,13 +1,8 @@
-from functools import reduce
 from math import cos, pi, pow, radians, sin, sqrt
-from random import random
 import numpy
-from numpy.core.fromnumeric import shape
+from numpy.core.numeric import Inf
 
-def jitt():
-  return ((random() -0.5) * 2) / 1000
-
-def initialize(masses, eccentricities, rmin, thetadeg, nrings, ninner, ring_spacing, ngal, np, maxp, outdir):
+def initialize(masses, eccentricities, rmin, thetadeg, nrings, ninner, ring_spacing, ngal, maxp):
   """
   Initializes the simulation
 
@@ -44,7 +39,6 @@ def initialize(masses, eccentricities, rmin, thetadeg, nrings, ninner, ring_spac
 
   # compute semi-major axis ?? see https://en.wikipedia.org/wiki/Apsis
   semi_major_axes = [rmin / (1 - eccentricity) for eccentricity in eccentricities] # semi_major_axes = a in f90
-
   # compute apastron distances
   apastron_distances = [semi_major_axis * (1 + eccentricity) for (semi_major_axis, eccentricity) in zip(semi_major_axes, eccentricities)] # apostron distances = r in f90
 
@@ -56,15 +50,19 @@ def initialize(masses, eccentricities, rmin, thetadeg, nrings, ninner, ring_spac
     v0 = sqrt(semi_major_axes[i-1] * (1-pow(eccentricities[i-1], 2)) * total_mass) / apastron_distances[i-1]
     velocities[i][i % 3] = v0
   
-  
   np = ngal
   # create galaxies
   for i in range(ngal):
-    positions, velocities, np = create_galaxy(positions, velocities, np, maxp, positions[i], velocities[i], masses[i], inclination_angles[i], nrings[i], ninner[i], ring_spacing[i])
+    print('creating galaxy {}'.format(i))
+    positions, velocities, np = create_galaxy(positions, velocities, np, positions[i], velocities[i], masses[i], inclination_angles[i], nrings[i], ninner[i], ring_spacing[i])
   print('set up {} particles'.format(np))
-  return positions, velocities, np
+  maxes = [-Inf, -Inf, -Inf]
+  for pos in positions:
+    for dim in range(3):
+      maxes[dim] = max(maxes[dim], abs(pos[dim]))
+  return positions, velocities, maxes
 
-def create_galaxy(positions, velocities, np, maxp, x0, v0, m0, theta, nrings, ninner, ring_spacing):
+def create_galaxy(positions, velocities, np, x0, v0, m0, theta, nrings, ninner, ring_spacing):
   """Creata a galaxy and at its data to the appropriate vectors
 
   Args:
@@ -73,7 +71,7 @@ def create_galaxy(positions, velocities, np, maxp, x0, v0, m0, theta, nrings, ni
       np (int): the total number of particles
       maxp (int): the maximum number of particles
       x0 (list): a 1x3 list of the initial position
-      v0 (list): a 1x3 list of the initial velocity
+      v0 (list): a 1x3 list of the initial velocitypos[dim]
       m0 (int): the mass
       theta (float): the inclincation angle in radians
       nrings (int): the amount of rings
@@ -82,26 +80,35 @@ def create_galaxy(positions, velocities, np, maxp, x0, v0, m0, theta, nrings, ni
   """
   for j in range(nrings):
     ring_radius = (j + 1) * ring_spacing
-    nphi = ninner + (ninner / 2) * j # number of particles per ring
+    n_particles = ninner + (ninner / 2) * j # number of particles per ring
+
     vphi = sqrt(m0/ring_radius)
-    dphi = 2 * pi / nphi
-    for i in range(int(nphi)):
+    dphi = 2 * pi / n_particles
+    # dtheta = 2 * pi / n_particles
+    dtheta = 0
+    for i in range(int(n_particles)):
       phi = i * dphi
-      if (np > maxp):
-        print("np > maxp: need bigger maxp")
+      ptheta = i * dtheta + theta
       dx = [
-        ring_radius * cos(phi) * cos(theta),
+        # ring_radius * cos(phi) * cos(theta),
+        ring_radius * cos(phi) * cos(ptheta),
         ring_radius * sin(phi),
-        -1 * ring_radius * cos(phi) * sin(theta)
+        # -1 * ring_radius * cos(phi) * sin(theta)
+        -1 * ring_radius * cos(phi) * sin(ptheta)
       ]
-      position = [px0 + pdx + jitt() for (px0, pdx) in zip(x0, dx)]
+      position = [px0 + pdx for (px0, pdx) in zip(x0, dx)]
       positions[np] = position
       dv = [
-        -1 * vphi * sin(phi) * cos(theta),
+        # -1 * vphi * sin(phi) * cos(theta),
+        -1 * vphi * sin(phi) * cos(ptheta),
         vphi * cos(phi), 
-        vphi * sin(phi)*sin(theta)
+        # vphi * sin(phi)*sin(theta)
+        vphi * sin(phi)*sin(ptheta)
       ]
-      velocity = [pv0 + pdv for (pv0, pdv) in zip(v0, dv)]
+      velocity = [pv0 + (pdv / 1) for (pv0, pdv) in zip(v0, dv)]
       velocities[np][:] = velocity
       np += 1 # count the total number of particles
   return positions, velocities, np
+
+def initialize_masses(m, np):
+  return numpy.array([*m, *[1 for _ in range(np - len(m))]])

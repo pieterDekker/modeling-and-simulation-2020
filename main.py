@@ -8,6 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import cProfile
 from pycallgraph import PyCallGraph
 from pycallgraph.output import GraphvizOutput
+from output import write_params, write_state
 
 def main():
   # TODO: obtain through input
@@ -71,17 +72,17 @@ def main():
     ring_spacing = list(map(lambda x: float(x), input('please enter {} ring spacings, separated by spaces (kpc): '.format(ngal)).strip().split(' ')))  
 
   print('initializing...')
-  x, v, np = initialize(m, e, rmin, thetadeg, nrings, ninner, ring_spacing, ngal, np, maxp, 'output')
+  x, v, maxes = initialize(m, e, rmin, thetadeg, nrings, ninner, ring_spacing, ngal, maxp)
   print(a[:5])
   print('setting initial accellerations...')
   a = zeros(shape=(maxp,3))
-  a = get_acceleration(x, a, m, ngal, np)
+  a = get_acceleration(x, a, m, ngal, maxp)
   print(a[:5])
 
   print('performing {} steps'.format(nsteps))
   for i in range(nsteps):
     x, v, a = step_leapfrog(x,v,a,m, ngal, np, dt)
+    
 
 if __name__ == '__main__':
-  # main()
-  cProfile.run('main()')
+  main()
