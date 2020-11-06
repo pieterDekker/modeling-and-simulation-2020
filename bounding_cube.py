@@ -17,8 +17,6 @@ class BoundingCube():
   def get_width(self):
     return self.width
   
-  # def get_ordered_subcubes() -> list:
-
   def get_subcubes(self) -> list:
     return [
       BoundingCube(self.center + np.array([x,y,z]), self.width / 2) 

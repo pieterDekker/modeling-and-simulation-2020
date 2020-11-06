@@ -9,7 +9,6 @@ def get_acceleration(x, a, m,ngal,np):
         dx = subtract(x[i], x[j])
         r2 = dot(dx, dx)
         r = sqrt(r2)
-        print('r: ', r)
         a[i] = a[i] -m[j] * dx / (r ** 3) # (4.2) on page 37 of Celestial Mechanics
   return a
 
