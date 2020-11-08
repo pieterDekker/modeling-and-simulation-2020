@@ -3,7 +3,26 @@ import json
 
 def parse_args():
     ap = argparse.ArgumentParser(description='Simulate N bodies')
-    ap.add_argument('file')
+    ap.add_argument('file', help='''
+    The file with the initial conditions. Example and expected format:
+    {
+      "ngal": 1,
+      "m": [2],
+      "e": [0],
+      "rmin": 35,
+      "ring_spacing": [10],
+      "thetadeg": [30],
+      "nrings": [10],
+      "ninner": [10]
+    }
+    
+    Where 'ngal' is the number of galaxies, 'm' is a list of masses, 'e' is a list of orbit eccentricites, 
+    'rmin' is the minimum separation between galaxies in kpc, 'ring_spacing' is a list of spacings between rings in kpc, 
+    'thetadeg' is a list of inclination angles in degrees, 'nrings' is a list of numbers of rings and 
+    'ninner is a list of number particles on the inner ring. All these values are used to generate galaxies, see init.py.
+    
+    
+    ''')
     ap.add_argument('--output-dir', default='output', type=str, help='The directory to which output is written, if  \'pickle\' is selected as ouptut method or whre output is read from if \'simulatino-method\' is unpickle')
     ap.add_argument('--simulation-method', default='barnes-hut', choices=['massless', 'barnes-hut', 'unpickle'], help='\'unpickle\' means that data is read from \'output-dir\'')
     ap.add_argument('--barnes-hut-theta', default=1, type=float, help='theta value to use, ignored unless simulation-method is \'barnes-hut\'')
