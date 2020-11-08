@@ -7,7 +7,7 @@ class AnimatedScatter(object):
   """An animated scatter plot using matplotlib.animations.FuncAnimation.
   Adapted from https://stackoverflow.com/a/9416663/5521776
   """
-  def __init__(self, data_stream, scope, ngal, output_interval, outdir):
+  def __init__(self, data_stream, scope, ngal, output_interval, delta_t, outdir):
     self.stream = data_stream
     self.scope = scope
     self.ngal = ngal
@@ -16,8 +16,9 @@ class AnimatedScatter(object):
     self.ax = self.fig.add_subplot(111, projection='3d')
     self.output_interval = output_interval
     self.center = [0,0,0]
+    self.delta_t=  delta_t
     if not os.path.isdir(outdir):
-      os.mkdir(outdir)
+      os.makedirs(outdir)
     self.outdir = outdir
     self.title = self.ax.text(-0.5, -0.5, 0, "N-Body", transform=self.ax.transAxes)
     # Then setup FuncAnimation.
@@ -33,11 +34,13 @@ class AnimatedScatter(object):
       self.ax.set_xlim([self.center[0] - self.scope,self.center[0] + self.scope])
       self.ax.set_ylim([self.center[1] - self.scope, self.center[1] + self.scope])
       self.ax.set_zlim([self.center[2] - self.scope, self.center[2] + self.scope])
+      print(f'marking the first {self.ngal} markers blue')
       self.scat, = self.ax.plot(x[:self.ngal,0], x[:self.ngal,1], x[:self.ngal,2], color="blue", linestyle="", marker="o", markersize=1.5)
       self.scat, = self.ax.plot(x[self.ngal:,0], x[self.ngal:,1], x[self.ngal:,2], color="orange",  linestyle="", marker="o", markersize=0.5)
       self.ax.set_xlabel('x [kpc]')
       self.ax.set_ylabel('y [kpc]')
       self.ax.set_zlabel('z [kpc]')
+      self.save(x, 0)
     except StopIteration:
       print("stream empty, animation done")
       self.ani.event_source.stop()
@@ -51,16 +54,15 @@ class AnimatedScatter(object):
   def update(self, i):
     """Update the scatter plot."""
     x = next(self.stream)
-    # self.ax.clear()
     self.ax.set_xlim([x[0,0] - self.scope, x[0,0] + self.scope])
     self.ax.set_ylim([x[0,1] - self.scope, x[0,1] + self.scope])
     self.ax.set_zlim([x[0,2] - self.scope, x[0,2] + self.scope])
     self.scat.set_data(x[:,0], x[:,1])
     self.scat.set_3d_properties(x[:,2])
-    # print('i: ', i)
-    if i % self.output_interval == 0:
-      self.save(x, i)
-    self.title.set_text('time [Myrs] ={} '.format(i))
+    # setup_plot is called twice, so this is actually iteration i + 2
+    if (i + 2) % self.output_interval == 0:
+      self.save(x, i + 2)
+    self.title.set_text('time [Myrs] ={} '.format((i + 2) * self.delta_t))
 
     # We need to return the updated artist for FuncAnimation to draw..
     # Note that it expects a sequence of artists, thus the trailing comma.

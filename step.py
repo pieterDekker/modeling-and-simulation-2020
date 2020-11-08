@@ -1,11 +1,7 @@
-from potentials import get_acceleration
 from math import inf, sqrt
-from numpy import subtract, dot
+from numpy import subtract, dot, array, zeros
 from octree import Octree
 from bounding_cube import BoundingCube
-
-
-# def _get_acceleration():
 
 
 def step_leapfrog(x, v, a, m, ngal, np, dt):
@@ -40,6 +36,6 @@ def step_leapfrog_barnes_hut(x, v, a, m, np, dt, theta, bounding_cube: BoundingC
             r = sqrt(r2)
             if r == 0.0:
                 continue
-            a[i] = a[i] - mass * dx / (r ** 3) # Is this correct?
+            a[i] = a[i] - mass * dx / (r ** 3)
         v[i] = v[i] + (0.5 * dt * a[i])
     return x, v, a, max_dim
