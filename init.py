@@ -111,4 +111,14 @@ def create_galaxy(positions, velocities, np, x0, v0, m0, theta, nrings, ninner, 
   return positions, velocities, np
 
 def initialize_masses(m, np):
-  return numpy.array([*m, *[1 for _ in range(np - len(m))]])
+  return numpy.array([*m, *[1e-6 for _ in range(np - len(m))]])
+
+
+def expected_particles(ngal, ninner, nrings):
+    ep = 0
+    for i in range(ngal):
+        p = ninner[i]
+        n = nrings[i]
+        ep += p * (n + (n * (n - 1) / 4))
+    ep += ngal
+    return int(ep)
