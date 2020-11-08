@@ -1,0 +1,10 @@
+{
+  "ngal": 1,
+  "m": [2],
+  "e": [0],
+  "rmin": 35,
+  "ring_spacing": [10],
+  "thetadeg": [30],
+  "nrings": [10],
+  "ninner": [10]
+}
